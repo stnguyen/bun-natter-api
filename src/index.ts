@@ -18,6 +18,7 @@ const server = Bun.serve({
       // Create a new space
       const { name, owner } = await req.json();
       await createSpace(db, name, owner);
+      return new Response("Created", { status: 201 });
     }
 
     return new Response("Not found", { status: 404 });
