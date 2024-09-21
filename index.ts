@@ -1,6 +1,4 @@
-import { Database } from "bun:sqlite";
 
-const db = new Database(":memory:");
 const server = Bun.serve({
     port: 3000,
     fetch(request) {
