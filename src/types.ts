@@ -21,5 +21,8 @@ export function validatePayload(payload: any, schema: TSchema): any {
   }
 
   const error = validator!.Errors(payload).First();
-  throw new TypeError(error!.message, { cause: error });
+  // Don't return the error object fully, as it may return malicious user input
+  throw new TypeError(error!.message, {
+    cause: { path: error?.path, schema: error?.schema },
+  });
 }
