@@ -1,16 +1,18 @@
 import { Database } from "bun:sqlite";
+import { Type, type Static } from "@sinclair/typebox";
 
-export async function createSpace(db: Database, name: string, owner: string) {
-  if (name.length > 255) {
-    throw new Error("name is longer than 255 characters");
-  }
-  if (owner.length > 30) {
-    throw new Error("owner is longer than 255 characters");
-  }
+export const TCreateSpacePayload = Type.Object({
+  name: Type.String({ minLength: 1, maxLength: 255 }),
+  owner: Type.String({ minLength: 1, maxLength: 30 }),
+});
 
+export async function createSpace(
+  db: Database,
+  space: Static<typeof TCreateSpacePayload>
+) {
   return db.run("INSERT INTO spaces (name, owner) VALUES (?, ?)", [
-    name,
-    owner,
+    space.name,
+    space.owner,
   ]);
 }
 

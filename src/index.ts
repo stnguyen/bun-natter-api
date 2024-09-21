@@ -1,5 +1,6 @@
 import db from "./database.ts";
-import { createSpace } from "./spaces.ts";
+import { createSpace, TCreateSpacePayload } from "./spaces.ts";
+import { validatePayload } from "./types.ts";
 
 const VERSION = "0.0.1";
 
@@ -16,16 +17,27 @@ const server = Bun.serve({
       return Response.json({ version: VERSION });
     } else if (method === "POST" && pathname === "/spaces") {
       // Create a new space
-      const { name, owner } = await req.json();
-      await createSpace(db, name, owner);
-      return new Response("Created", { status: 201 });
+      await createSpace(
+        db,
+        validatePayload(await req.json(), TCreateSpacePayload)
+      );
+      return Response.json({}, { status: 201 });
     }
 
-    return new Response("Not found", { status: 404 });
+    return Response.json({ message: "Not Found" }, { status: 404 });
   },
   error(e) {
     console.error(e);
-    return new Response("Internal server error", { status: 500 });
+    if (e instanceof TypeError) {
+      return Response.json(
+        { message: e.message, cause: e.cause },
+        { status: 400 }
+      );
+    } else if (e instanceof SyntaxError) {
+      return Response.json({ message: e.message }, { status: 400 });
+    }
+
+    return Response.json({ message: "Internal Server Error" }, { status: 500 });
   },
 });
 
