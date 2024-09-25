@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import db from "./database.ts";
+import { SQLiteError } from "bun:sqlite";
 import { createSpace, TCreateSpacePayload } from "./spaces.ts";
 import { validatePayload } from "./types.ts";
 import {
@@ -42,10 +43,20 @@ const server = Bun.serve({
       return Response.json({}, { status: 201 });
     } else if (method === "POST" && pathname === "/users") {
       // Create a new user
-      await createUser(
-        db,
-        validatePayload(await req.json(), TCreateUserPayload)
-      );
+      try {
+        await createUser(
+          db,
+          validatePayload(await req.json(), TCreateUserPayload)
+        );
+      } catch (e) {
+        if (e instanceof SQLiteError && e.code === "SQLITE_CONSTRAINT_UNIQUE") {
+          return Response.json(
+            { message: "Username already taken" },
+            { status: 400 }
+          );
+        }
+        throw e;
+      }
       return Response.json({}, { status: 201 });
     } else if (method === "POST" && pathname === "/sessions") {
       // Sign in a user
