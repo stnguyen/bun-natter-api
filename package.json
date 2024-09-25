@@ -9,6 +9,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@sinclair/typebox": "^0.33.12"
+    "@sinclair/typebox": "^0.33.12",
+    "dotenv": "^16.4.5"
   }
 }

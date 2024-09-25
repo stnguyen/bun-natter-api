@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import db from "./database.ts";
 import { createSpace, TCreateSpacePayload } from "./spaces.ts";
 import { validatePayload } from "./types.ts";
@@ -8,10 +9,21 @@ import {
   TSignInPayload,
 } from "./users.ts";
 
+dotenv.config();
+
+const { HTTPS_KEY, HTTPS_CERT } = process.env;
+const tls =
+  HTTPS_KEY && HTTPS_CERT
+    ? { key: Bun.file(HTTPS_KEY), cert: Bun.file(HTTPS_CERT) }
+    : undefined;
+
+console.log("Starting server with tls:", tls);
+
 const VERSION = "0.0.1";
 
 const server = Bun.serve({
   port: 4567,
+  tls,
   async fetch(req, server) {
     const { method, url } = req;
     const pathname = new URL(url).pathname;
