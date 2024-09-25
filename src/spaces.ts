@@ -17,5 +17,5 @@ export async function createSpace(
 }
 
 export async function getSpaces(db: Database) {
-  return db.query("SELECT * FROM spaces").all;
+  return db.query("SELECT * FROM spaces").all();
 }

@@ -1,6 +1,12 @@
 import db from "./database.ts";
 import { createSpace, TCreateSpacePayload } from "./spaces.ts";
 import { validatePayload } from "./types.ts";
+import {
+  createUser,
+  signIn,
+  TCreateUserPayload,
+  TSignInPayload,
+} from "./users.ts";
 
 const VERSION = "0.0.1";
 
@@ -21,6 +27,24 @@ const server = Bun.serve({
         db,
         validatePayload(await req.json(), TCreateSpacePayload)
       );
+      return Response.json({}, { status: 201 });
+    } else if (method === "POST" && pathname === "/users") {
+      // Create a new user
+      await createUser(
+        db,
+        validatePayload(await req.json(), TCreateUserPayload)
+      );
+      return Response.json({}, { status: 201 });
+    } else if (method === "POST" && pathname === "/sessions") {
+      // Sign in a user
+      const isValid = await signIn(
+        db,
+        validatePayload(await req.json(), TSignInPayload)
+      );
+      if (!isValid) {
+        return Response.json({ message: "Unauthorized" }, { status: 401 });
+      }
+      // TODO create a session and return token
       return Response.json({}, { status: 201 });
     }
 
