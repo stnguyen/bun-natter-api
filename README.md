@@ -4,13 +4,13 @@ To install dependencies:
 
 ```bash
 curl -fsSL https://bun.sh/install | bash
-bun insbun installtall
+bun install
 ```
 
 To run:
 
 ```bash
-bun run index.ts
+bun run src/index.ts
 ```
 
 

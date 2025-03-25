@@ -2,7 +2,7 @@
   "name": "bun-natter-api",
   "module": "index.ts",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.2.5"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

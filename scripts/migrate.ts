@@ -3,7 +3,7 @@ import { readdir } from "node:fs/promises";
 
 const MIGRATION_DIR = `${import.meta.dir}/migrations`;
 
-async function migrateToLatest(database: Database) {
+export async function migrateToLatest(database: Database) {
   // Make sure the migrations table exists
   await database.run(`
         CREATE TABLE IF NOT EXISTS migrations (
