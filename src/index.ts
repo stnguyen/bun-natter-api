@@ -9,6 +9,8 @@ import {
   TCreateUserPayload,
   TSignInPayload,
 } from "./users.ts";
+import type { Server } from "bun";
+import { logAuditEvent } from "./audit.ts";
 
 dotenv.config();
 const VERSION = "0.0.1";
@@ -30,47 +32,60 @@ function startServer(hostname: string, port: number): Server {
 
       console.log(`Received ${method} request to '${pathname}'`);
 
+      let response;
+      let userId: string | undefined;
+
       if (method === "GET" && pathname === "/") {
         // Health check
-        return Response.json({ version: VERSION });
+        response = Response.json({ version: VERSION });
       } else if (method === "POST" && pathname === "/spaces") {
         // Create a new space
         await createSpace(
           db,
           validatePayload(await req.json(), TCreateSpacePayload)
         );
-        return Response.json({}, { status: 201 });
+        response = Response.json({}, { status: 201 });
       } else if (method === "POST" && pathname === "/users") {
         // Create a new user
         try {
-          await createUser(
-            db,
-            validatePayload(await req.json(), TCreateUserPayload)
-          );
+          const userData = validatePayload(await req.json(), TCreateUserPayload);
+          await createUser(db, userData);
+          userId = userData.username;
+          response = Response.json({}, { status: 201 });
         } catch (e) {
           if (e instanceof SQLiteError && e.code === "SQLITE_CONSTRAINT_UNIQUE") {
-            return Response.json(
+            response = Response.json(
               { message: "Username already taken" },
               { status: 400 }
             );
+          } else {
+            throw e;
           }
-          throw e;
         }
-        return Response.json({}, { status: 201 });
       } else if (method === "POST" && pathname === "/sessions") {
         // Sign in a user
-        const isValid = await signIn(
-          db,
-          validatePayload(await req.json(), TSignInPayload)
-        );
+        const signInData = validatePayload(await req.json(), TSignInPayload);
+        const isValid = await signIn(db, signInData);
         if (!isValid) {
-          return Response.json({ message: "Unauthorized" }, { status: 401 });
+          response = Response.json({ message: "Unauthorized" }, { status: 401 });
+        } else {
+          userId = signInData.username;
+          // TODO create a session and return token
+          response = Response.json({}, { status: 201 });
         }
-        // TODO create a session and return token
-        return Response.json({}, { status: 201 });
+      } else {
+        response = Response.json({ message: "Not Found" }, { status: 404 });
       }
 
-      return Response.json({ message: "Not Found" }, { status: 404 });
+      // Log the audit event
+      logAuditEvent({
+        method,
+        path: pathname,
+        userId,
+        status: response.status
+      });
+
+      return response;
     },
     error(e) {
       console.error(e);
